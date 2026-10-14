@@ -1,12 +1,13 @@
+#!/usr/bin/env bash
 # Maintainer: Vilmar Catafesta <vcatafesta@gmail.com>
 
 pkgname=voidbr-louvorja-piano-config
 pkgdesc="Skel config for VoidBR with LouvorJa-Piano"
 pkgver=$(date +%Y%m%d)
 pkgrel=$(date +%H%M)
-provides=(voidbr-plasma-config-louvorja-piano)   # "eu SOU o $pkgname pkg1, pra quem depender deles"
-replaces=(voidbr-plasma-config-louvorja-piano)   # "remove o pkg1 pkg2 antigo automaticamente quando eu instalar"
-conflicts=(voidbr-plasma-config-louvorja-piano)  # "nunca me deixe coexistir com o pkg1 pkg2 original"
+provides=(voidbr-plasma-config-louvorja-piano)  # "eu SOU o $pkgname pkg1, pra quem depender deles"
+replaces=(voidbr-plasma-config-louvorja-piano)  # "remove o pkg1 pkg2 antigo automaticamente quando eu instalar"
+conflicts=(voidbr-plasma-config-louvorja-piano) # "nunca me deixe coexistir com o pkg1 pkg2 original"
 arch=('any')
 license=('MIT')
 #url="ssh://git@github.com/voidlinuxbr/${pkgname}"
@@ -14,20 +15,28 @@ url="https://github.com/voidlinuxbr/${pkgname}"
 source=("git+${url}.git")
 md5sums=('SKIP')
 makedepends=()
-depends=(louvorja-piano voidbr-wallpapers vlc google-chrome)
+depends=(
+	louvorja-piano
+	voidbr-wallpapers
+	vlc
+	google-chrome
+)
+backup=()
 
 package() {
-	cd "${srcdir}/${pkgname}"
-
 	# Verify default folder
 	if [ -d "${srcdir}/${pkgname}/${pkgname}" ]; then
 		InternalDir="${srcdir}/${pkgname}/${pkgname}"
-	else
+	elif [ -d "${srcdir}/${pkgname}" ]; then
 		InternalDir="${srcdir}/${pkgname}"
+	else
+		#local
+		InternalDir="${WORKDIR}"
 	fi
 
+	cd "${InternalDir}"
 	# Copiar a estrutura de /etc, /usr e /opt para /
-	local dirs=("usr" "etc" "opt")
+	local dirs=("boot" "etc" "opt" "usr" "var")
 	for dir in "${dirs[@]}"; do
 		if [ -d "${InternalDir}/${dir}" ]; then
 			cp -a "${InternalDir}/${dir}" "${pkgdir}/"
@@ -38,6 +47,7 @@ package() {
 	[ -f "LICENSE" ] && install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 	# Install documentation if present
 	[ -f "README.md" ] && install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+
 }
 
 pre_install() {
@@ -45,7 +55,12 @@ pre_install() {
 }
 
 post_install() {
-  log "Finalizando instalação"
+  if [ "${update:-}" = "yes" ]; then
+    log "Finalizando upgrade"
+  else
+    log "Finalizando instalação"
+  fi
+
 }
 
 pre_upgrade() {
@@ -53,5 +68,5 @@ pre_upgrade() {
 }
 
 post_upgrade() {
-  log "Finalizando upgrade"
+  post_install
 }
